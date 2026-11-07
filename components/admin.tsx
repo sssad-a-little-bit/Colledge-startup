@@ -267,12 +267,16 @@ function EntityEditor({ resource }: { resource: string }) {
         label: "Минимальный балл",
         type: "number",
         required: true,
+        min: 0,
+        max: 100,
       },
       {
         name: "max",
         label: "Максимальный балл",
         type: "number",
         required: true,
+        min: 0,
+        max: 100,
       },
     ];
   else if (resource === "periods")
@@ -578,8 +582,7 @@ function Settings() {
           контрольных или больше.
         </p>
         <p className="muted">
-          Это демонстрационное значение. Оно не является учебным регламентом
-          колледжа.
+          Настройка помогает равномерно распределять контрольные по дням.
         </p>
         <button className="button primary" onClick={() => setOpen(true)}>
           Изменить порог

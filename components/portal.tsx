@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { getSession, signOut } from "next-auth/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowDownToLine,
   ArrowRight,
@@ -29,7 +29,10 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { Brand, DemoNotice } from "./public";
+import { Brand } from "./public";
+import { Clubs } from "./clubs";
+import { Grades } from "./gradebook";
+import gradebookStyles from "./gradebook.module.css";
 import {
   api,
   assignmentOptions,
@@ -44,8 +47,6 @@ import {
   State,
   Toast,
   useResource,
-  usePagedResource,
-  Pagination,
   utcInput,
 } from "./ui";
 import { Admin } from "./admin";
@@ -60,6 +61,7 @@ const nav = [
   { href: "/campus/assessments", title: "Контрольные", icon: BookOpen },
   { href: "/campus/grades", title: "Оценки и журнал", icon: TrendingUp },
   { href: "/campus/assignments", title: "Группы и предметы", icon: Users },
+  { href: "/campus/clubs", title: "Кружки и секции", icon: Sparkles },
   { href: "/campus/news", title: "Новости", icon: GraduationCap },
   { href: "/campus/notifications", title: "Уведомления", icon: Bell },
 ];
@@ -206,7 +208,6 @@ export function Portal() {
             </Link>
           </div>
         </header>
-        <DemoNotice />
         <main id="main" className="workspace">
           {section === "overview" ? (
             <Overview user={user} />
@@ -218,6 +219,8 @@ export function Portal() {
             <Grades user={user} />
           ) : section === "assignments" ? (
             <Assignments />
+          ) : section === "clubs" ? (
+            <Clubs user={user} />
           ) : section === "notifications" ? (
             <Notifications />
           ) : section === "profile" ? (
@@ -609,7 +612,7 @@ function LoadChart({
             {d.assessments >= threshold && (
               <span
                 className="load-warning"
-                title="Достигнут демонстрационный порог нагрузки"
+                title="Достигнут порог учебной нагрузки"
               >
                 !
               </span>
@@ -626,7 +629,7 @@ function LoadChart({
           <i />
           Контрольные
         </span>
-        <small>Демонстрационный порог, не регламент колледжа</small>
+        <small>Порог нагрузки настраивается администратором</small>
       </div>
     </>
   );
@@ -1054,7 +1057,7 @@ function Assessments({ user }: { user: Row }) {
     <>
       <PageHeading
         title="Контрольные и календарь"
-        subtitle="Планируйте подготовку заранее. Типы работ и порог нагрузки — демонстрационные настройки."
+        subtitle="Даты, темы и требования к предстоящим работам — в одном календаре."
         action={
           user.role !== "STUDENT" ? (
             <button
@@ -1214,416 +1217,114 @@ function Assessments({ user }: { user: Row }) {
     </>
   );
 }
-function Grades({ user }: { user: Row }) {
-  const [assignment, setAssignment] = useState("");
-  const [period, setPeriod] = useState("");
-  const resource = usePagedResource(
-    `grades?${new URLSearchParams({ ...(assignment ? { assignmentId: assignment } : {}), ...(period ? { periodId: period } : {}) }).toString()}`,
-  );
-  const [editing, setEditing] = useState<Row | null>(null);
-  const [lookups, setLookups] = useState<Row>({});
-  const [saved, setSaved] = useState("");
-  const [history, setHistory] = useState<Row | null>(null);
-  useEffect(() => {
-    Promise.all([
-      api("assignments"),
-      user.role !== "STUDENT" ? api("users") : Promise.resolve([]),
-      api("assessments"),
-      api("periods"),
-      api("scales"),
-    ])
-      .then(([assignments, users, assessments, periods, scales]) =>
-        setLookups({ assignments, users, assessments, periods, scales }),
-      )
-      .catch(() => {});
-  }, [user.role]);
-  const rows: Row[] = Array.isArray(resource.data) ? resource.data : [];
-  const assignments = assignmentOptions(lookups.assignments || []);
-  const periods: Row[] = lookups.periods || [];
-  const filtered = rows.filter(
-    (g) =>
-      (!assignment || g.assignmentId === assignment) &&
-      (!period || g.assignment?.periodId === period),
-  );
-  const scores = filtered.filter((g) => g.kind === "SCORE" && g.value !== null);
-  const mixedScales = new Set(scores.map((g) => g.scaleId)).size > 1;
-  const average =
-    scores.length && !mixedScales
-      ? (
-          scores.reduce((s, g) => s + Number(g.value), 0) / scores.length
-        ).toFixed(1)
-      : "—";
-  const fields: Field[] = [
-    {
-      name: "assignmentId",
-      label: "Предмет, группа и период",
-      required: true,
-      options: assignmentOptions(lookups.assignments),
-    },
-    {
-      name: "studentId",
-      label: "Студент",
-      required: true,
-      options: options(
-        (lookups.users || []).filter((u: Row) => u.role === "STUDENT"),
-      ),
-    },
-    {
-      name: "assessmentId",
-      label: "Связанная контрольная",
-      options: (lookups.assessments || []).map((a: Row) => ({
-        value: a.id,
-        label: a.title,
-      })),
-    },
-    {
-      name: "kind",
-      label: "Тип записи",
-      required: true,
-      options: [
-        { value: "SCORE", label: "Балл" },
-        { value: "ABSENT", label: "Пропуск" },
-        { value: "UNGRADED", label: "Без оценки" },
-      ],
-    },
-    {
-      name: "scaleId",
-      label: "Шкала оценивания",
-      required: true,
-      options: (lookups.scales || []).map((s: Row) => ({
-        value: s.id,
-        label: `${s.name} · ${s.min}–${s.max}`,
-      })),
-    },
-    {
-      name: "value",
-      label: "Балл по выбранной шкале",
-      type: "number",
-      hint: "Допустимый диапазон проверяется сервером по выбранной шкале.",
-    },
-    { name: "workType", label: "Вид работы", required: true },
-    { name: "date", label: "Дата работы", type: "date", required: true },
-    { name: "comment", label: "Комментарий", type: "textarea" },
-    ...(editing?.id
-      ? [
-          {
-            name: "reason",
-            label: "Причина исправления (сохраняется в истории)",
-            required: true,
-          },
-        ]
-      : []),
-  ];
-  return (
-    <>
-      <PageHeading
-        title={user.role === "STUDENT" ? "Мои оценки" : "Учебный журнал"}
-        subtitle="Демонстрационная шкала 0–100. Пропуск, отсутствие оценки и ноль различаются."
-        action={
-          user.role === "TEACHER" ||
-          (user.role === "ADMIN" && user.canManageGrades) ? (
-            <button
-              className="button primary"
-              onClick={() =>
-                setEditing({
-                  kind: "SCORE",
-                  scaleId: "demo100",
-                  workType: "Практическая работа",
-                  date: dateKey(new Date()),
-                })
-              }
-            >
-              <Plus size={17} /> Выставить оценку
-            </button>
-          ) : undefined
-        }
-      />
-      <div className="toolbar">
-        <select
-          aria-label="Предмет и группа"
-          value={assignment}
-          onChange={(e) => setAssignment(e.target.value)}
-        >
-          <option value="">Все доступные предметы</option>
-          {assignments.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-        <select
-          aria-label="Учебный период"
-          value={period}
-          onChange={(e) => setPeriod(e.target.value)}
-        >
-          <option value="">Все периоды</option>
-          {periods.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
-        <a
-          className="button secondary"
-          href={`/api/export?resource=grades${assignment ? `&assignmentId=${encodeURIComponent(assignment)}` : ""}`}
-        >
-          <ArrowDownToLine size={16} /> Экспорт CSV
-        </a>
-      </div>
-      <State
-        loading={resource.loading}
-        error={resource.error}
-        retry={resource.reload}
-      >
-        <div className="grade-summary">
-          <div>
-            <span className="stat-icon purple">
-              <TrendingUp size={22} />
-            </span>
-            <div>
-              <strong>{average}</strong>
-              <span>Среднее по записям на этой странице</span>
-            </div>
-          </div>
-          <p>
-            {mixedScales ? (
-              "На странице разные шкалы. Среднее по разным шкалам не рассчитывается."
-            ) : (
-              <>
-                Сумма баллов на этой странице ÷ число записей с баллом (
-                {scores.length}). Пропуски и записи без оценки исключены.
-              </>
-            )}
-            <br />
-            Это справочный показатель, не официальная итоговая оценка.
-          </p>
-        </div>
-        {!filtered.length ? (
-          <div className="empty">
-            <h3>Оценок по выбранным фильтрам нет</h3>
-            <p>Новые результаты появятся после внесения преподавателем.</p>
-          </div>
-        ) : (
-          <div className="panel table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Предмет / работа</th>
-                  {user.role !== "STUDENT" && <th>Студент</th>}
-                  <th>Дата</th>
-                  <th>Результат</th>
-                  <th>Комментарий</th>
-                  {user.role !== "STUDENT" && <th>Действия</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((g) => (
-                  <tr key={g.id}>
-                    <td data-label="Предмет">
-                      <strong>{g.assignment?.subject?.name}</strong>
-                      <small>
-                        {g.workType} · {g.assignment?.group?.name}
-                      </small>
-                    </td>
-                    {user.role !== "STUDENT" && (
-                      <td data-label="Студент">
-                        {g.student?.name || g.studentId}
-                      </td>
-                    )}
-                    <td data-label="Дата">{date(g.date)}</td>
-                    <td data-label="Результат">
-                      <span
-                        className={`grade-chip ${g.kind !== "SCORE" ? "ungraded" : "good"}`}
-                      >
-                        {g.kind === "ABSENT"
-                          ? "Пропуск"
-                          : g.kind === "UNGRADED"
-                            ? "Без оценки"
-                            : `${g.value}`}
-                      </span>
-                      <small>
-                        {g.scale?.name || "Шкала не указана"}
-                        {g.scale && ` · ${g.scale.min}–${g.scale.max}`}
-                      </small>
-                    </td>
-                    <td data-label="Комментарий">{g.comment || "—"}</td>
-                    {user.role !== "STUDENT" && (
-                      <td className="table-actions">
-                        {(user.role === "TEACHER" || user.canManageGrades) && (
-                          <button
-                            className="text-button"
-                            onClick={() => setEditing(g)}
-                          >
-                            Исправить
-                          </button>
-                        )}
-                        <button
-                          className="text-button"
-                          onClick={() => setHistory(g)}
-                        >
-                          История
-                        </button>
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </State>
-      <Pagination resource={resource} />
-      {editing && (
-        <ModalForm
-          title={editing.id ? "Исправить оценку" : "Новая оценка"}
-          description="Изменение проверяется по версии записи. Чужая одновременная правка не будет перезаписана."
-          action="saveGrade"
-          initial={editing}
-          fields={fields}
-          onClose={() => setEditing(null)}
-          onSaved={() => {
-            resource.reload();
-            setSaved("Оценка сохранена");
-          }}
-        />
-      )}
-      {history && (
-        <HistoryDialog grade={history} onClose={() => setHistory(null)} />
-      )}{" "}
-      {saved && <Toast text={saved} onClose={() => setSaved("")} />}
-    </>
-  );
-}
-function HistoryDialog({
-  grade,
-  onClose,
-}: {
-  grade: Row;
-  onClose: () => void;
-}) {
-  const dialog = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    dialog.current?.showModal();
-  }, []);
-  const [data, setData] = useState<Row[]>([]);
-  const [error, setError] = useState("");
-  useEffect(() => {
-    fetch(
-      `/api/portal?resource=gradeHistory&id=${encodeURIComponent(grade.id)}`,
-      { cache: "no-store" },
-    )
-      .then(async (r) => {
-        const j = await r.json();
-        if (!r.ok) throw Error(j.error?.message || "История недоступна");
-        setData(j.data || []);
-      })
-      .catch((e) => setError(e.message));
-  }, [grade.id]);
-  return (
-    <dialog
-      ref={dialog}
-      className="modal history-dialog"
-      aria-labelledby="history-title"
-      onCancel={onClose}
-    >
-      <div className="modal-header">
-        <h2 id="history-title">История исправлений</h2>
-        <button
-          autoFocus
-          className="icon-button"
-          onClick={onClose}
-          aria-label="Закрыть"
-        >
-          <X size={20} />
-        </button>
-      </div>
-      {error ? (
-        <div className="error-box">{error}</div>
-      ) : data.length ? (
-        data.map((h) => (
-          <div className="history-item" key={h.id}>
-            <strong>{h.reason}</strong>
-            <p>
-              Результат:{" "}
-              {h.oldValue?.kind === "SCORE"
-                ? h.oldValue.value
-                : h.oldValue?.kind === "ABSENT"
-                  ? "Пропуск"
-                  : "Без оценки"}{" "}
-              →{" "}
-              {h.newValue?.kind === "SCORE"
-                ? h.newValue.value
-                : h.newValue?.kind === "ABSENT"
-                  ? "Пропуск"
-                  : "Без оценки"}
-              {h.oldValue?.comment !== h.newValue?.comment &&
-                ` · Комментарий: ${h.oldValue?.comment || "—"} → ${h.newValue?.comment || "—"}`}
-            </p>
-            <small>
-              {h.actor?.name} ·{" "}
-              {date(h.createdAt, {
-                day: "numeric",
-                month: "long",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </small>
-          </div>
-        ))
-      ) : (
-        <p className="muted">Исправлений пока нет.</p>
-      )}
-    </dialog>
-  );
-}
 function Assignments() {
   const resource = useResource("assignments");
+  const [search, setSearch] = useState("");
   const rows: Row[] = Array.isArray(resource.data) ? resource.data : [];
+  const groups = [...new Map(rows.map((a) => [a.groupId, a.group])).values()]
+    .filter((group) =>
+      String(group.name).toLowerCase().includes(search.toLowerCase().trim()),
+    )
+    .sort((a, b) => String(a.name).localeCompare(String(b.name), "ru"));
   return (
     <>
       <PageHeading
-        title="Мои группы и предметы"
-        subtitle="Доступ к журналу и контрольным определяется действующими назначениями на учебный период."
+        title="Группы и предметы"
+        subtitle="Найдите группу, посмотрите её состав и откройте журнал нужного предмета."
       />
+      <div className="toolbar">
+        <label>
+          Поиск группы
+          <input
+            type="search"
+            placeholder="Название группы"
+            aria-label="Поиск группы"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </label>
+      </div>
       <State
         loading={resource.loading}
         error={resource.error}
         retry={resource.reload}
-        empty={!rows.length}
       >
         <div className="assessment-grid">
-          {rows.map((a) => (
-            <section className="assignment-card" key={a.id}>
-              <span className="stat-icon purple">
-                <Users size={23} />
-              </span>
-              <h2>{a.subject?.name}</h2>
-              <p className="assignment-group">{a.group?.name}</p>
-              <dl>
-                <div>
-                  <dt>Учебный период</dt>
-                  <dd>{a.period?.name}</dd>
+          {groups.map((group) => {
+            const assignments = rows.filter((a) => a.groupId === group.id);
+            const members = [
+              ...new Map<string, Row>(
+                assignments.flatMap((a) =>
+                  (a.group?.memberships || [])
+                    .filter((m: Row) => m.user?.active !== false)
+                    .map((m: Row) => [m.user.id, m.user] as [string, Row]),
+                ),
+              ).values(),
+            ].sort((a, b) =>
+              String(a.name).localeCompare(String(b.name), "ru"),
+            );
+            return (
+              <section className="assignment-card" key={group.id}>
+                <span className="stat-icon purple">
+                  <Users size={23} />
+                </span>
+                <h2>{group.name}</h2>
+                <p className="assignment-group">
+                  {group.course} курс · {group.program}
+                </p>
+                <details className={gradebookStyles.roster}>
+                  <summary>Состав группы · {members.length} учеников</summary>
+                  {members.length ? (
+                    <ul>
+                      {members.map((student) => (
+                        <li key={student.id}>{student.name}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p>Ученики ещё не зачислены в эту группу.</p>
+                  )}
+                </details>
+                <div className={gradebookStyles.assignmentSubjects}>
+                  {assignments.map((a) => (
+                    <div key={a.id}>
+                      <strong>{a.subject?.name}</strong>
+                      <small>
+                        {a.teacher?.name} · {a.period?.name}
+                      </small>
+                      <Link
+                        href={
+                          "/campus/grades?groupId=" +
+                          encodeURIComponent(group.id) +
+                          "&assignmentId=" +
+                          encodeURIComponent(a.id)
+                        }
+                        className="text-link"
+                      >
+                        Открыть журнал предмета →
+                      </Link>
+                    </div>
+                  ))}
                 </div>
-                <div>
-                  <dt>Программа</dt>
-                  <dd>{a.group?.program}</dd>
+                <div className="assignment-actions">
+                  <Link
+                    href={
+                      "/campus/grades?groupId=" + encodeURIComponent(group.id)
+                    }
+                    className="button secondary"
+                  >
+                    Журнал группы <ArrowRight size={15} />
+                  </Link>
                 </div>
-                <div>
-                  <dt>Преподаватель</dt>
-                  <dd>{a.teacher?.name}</dd>
-                </div>
-              </dl>
-              <div className="assignment-actions">
-                <Link href="/campus/grades" className="button secondary">
-                  Открыть журнал <ArrowRight size={15} />
-                </Link>
-                <Link href="/campus/assessments" className="text-link">
-                  Контрольные
-                </Link>
-              </div>
-            </section>
-          ))}
+              </section>
+            );
+          })}
         </div>
+        {!groups.length && (
+          <div className="empty">
+            <h3>Группы не найдены</h3>
+            <p>Проверьте название или назначения преподавателя.</p>
+          </div>
+        )}
       </State>
     </>
   );
@@ -1869,8 +1570,8 @@ function Profile({ user }: { user: Row }) {
             <div className="panel-hint">
               <ShieldCheck size={18} />
               <span>
-                Здесь используются только синтетические данные. ИИН и домашний
-                адрес не собираются.
+                Учебная группа и роль назначаются администратором. Контактные
+                данные можно изменить в профиле.
               </span>
             </div>
           </section>

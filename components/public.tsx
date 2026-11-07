@@ -28,12 +28,7 @@ export function Brand() {
   );
 }
 export function DemoNotice() {
-  return (
-    <div className="demo-notice">
-      <span className="demo-dot" /> Демонстрационный проект. Данные вымышлены.{" "}
-      <span>Не является официальным сайтом колледжа.</span>
-    </div>
-  );
+  return null;
 }
 function Header() {
   return (
@@ -226,8 +221,7 @@ export function PublicHome() {
           <div>
             <h2>Одно пространство для учебного дня</h2>
             <p>
-              Рабочее название «КИТ Campus». Демонстрационная версия для IT
-              STARTUP.
+              Расписание, оценки, новости и кружки — в вашем личном кабинете.
             </p>
           </div>
           <Link href="/login" className="button primary">
@@ -284,9 +278,7 @@ export function PublicNews({ id }: { id?: string }) {
           <>
             <span className="eyebrow">ЖИЗНЬ ПОРТАЛА</span>
             <h1>Новости и объявления</h1>
-            <p className="muted">
-              Публичные публикации демонстрационного портала.
-            </p>
+            <p className="muted">Новости учебной жизни и важные объявления.</p>
           </>
         )}
         {loading ? (
@@ -379,7 +371,7 @@ export function Login() {
               </span>
             </div>
           </div>
-          <small>КИТ Campus · Павлодар · Конкурсный проект</small>
+          <small>КИТ Campus · Павлодар · Учебный портал</small>
         </section>
         <main id="main" className="login-main">
           <Link href="/" className="breadcrumb">
@@ -400,7 +392,7 @@ export function Login() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@example.test"
+                placeholder="name@kit.local"
               />
             </label>
             <label>
@@ -427,8 +419,7 @@ export function Login() {
             <p className="login-help">
               Учётную запись создаёт администратор.
               <br />
-              Для демонстрации используйте данные из локальной инструкции
-              проекта.
+              Если не получается войти, обратитесь к администратору.
             </p>
           </form>
           <div className="login-caption">
@@ -443,7 +434,7 @@ function Footer() {
   return (
     <footer className="public-footer">
       <Brand />
-      <p>Демонстрационный проект · данные вымышлены</p>
+      <p>Расписание, оценки и кружки</p>
       <span>Павлодар, Казахстан</span>
     </footer>
   );

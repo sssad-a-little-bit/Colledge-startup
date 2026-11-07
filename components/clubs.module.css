@@ -1,0 +1,476 @@
+.intro {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 25px 28px;
+  border: 1px solid #dfe7f6;
+  border-radius: 15px;
+  background: linear-gradient(110deg, #eef3ff, #f6f9ff);
+  margin-bottom: 30px;
+}
+.introIcon {
+  display: grid;
+  place-items: center;
+  color: #4669b2;
+  width: 58px;
+  height: 58px;
+  background: #fff;
+  border: 1px solid #e2e9f6;
+  border-radius: 16px;
+  flex-shrink: 0;
+}
+.eyebrow {
+  display: block;
+  font-size: 10px;
+  color: #5574b4;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  font-weight: 700;
+  margin-bottom: 7px;
+}
+.intro h2 {
+  font-size: 20px;
+  margin-bottom: 7px;
+}
+.intro p {
+  color: #6c7890;
+  font-size: 12px;
+  max-width: 600px;
+}
+.introCount {
+  margin-left: auto;
+  padding-left: 24px;
+  border-left: 1px solid #d9e2f3;
+  min-width: 140px;
+  display: flex;
+  flex-direction: column;
+}
+.introCount strong {
+  font-size: 31px;
+  line-height: 1.25;
+  color: #4669b2;
+}
+.introCount span {
+  color: #6c7890;
+  font-size: 11px;
+}
+.catalogHeader {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.catalogHeader h2 {
+  font-size: 18px;
+}
+.filters {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.filters label {
+  min-width: 175px;
+}
+.filters select {
+  font-size: 12px;
+  margin-top: 0;
+}
+.search {
+  position: relative;
+  min-width: 250px !important;
+}
+.search svg {
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #8590a7;
+  pointer-events: none;
+}
+.search input {
+  padding-left: 39px;
+  font-size: 12px;
+  margin-top: 0;
+}
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.card {
+  background: #fff;
+  border: 1px solid #e3e8f1;
+  border-radius: 15px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 3px 8px #22365b03;
+}
+.cardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 19px;
+}
+.clubIcon {
+  width: 50px;
+  height: 50px;
+  border-radius: 13px;
+  display: grid;
+  place-items: center;
+  background: #edf2ff;
+  color: #5976c1;
+}
+.sports {
+  background: #fff1e6;
+  color: #be8756;
+}
+.category {
+  background: #f3f5f9;
+  color: #7b8599;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 5px 9px;
+  border-radius: 5px;
+}
+.card h3 {
+  font-size: 20px;
+  margin-bottom: 9px;
+}
+.description {
+  color: #788297;
+  font-size: 12px;
+  min-height: 42px;
+}
+.details {
+  display: grid;
+  gap: 13px;
+  margin: 24px 0 0;
+}
+.details > div {
+  display: grid;
+  grid-template-columns: 132px 1fr;
+  gap: 14px;
+}
+.details dt {
+  color: #8a93a5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+}
+.details dd {
+  margin: 0;
+  color: #505b71;
+  font-weight: 550;
+  font-size: 12px;
+}
+.cardFooter {
+  border-top: 1px solid #edf0f5;
+  padding-top: 18px;
+  margin-top: 22px;
+}
+.cardFooter > button {
+  width: 100%;
+  justify-content: space-between;
+}
+.applicationState {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border-radius: 8px;
+  padding: 11px 13px;
+}
+.applicationState strong {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  font-size: 12px;
+}
+.applicationState > span {
+  font-size: 11px;
+  line-height: 1.5;
+}
+.pending {
+  background: #fdf6e9;
+  color: #9f7c37;
+}
+.approved {
+  background: #ecf7f2;
+  color: #368668;
+}
+.declined {
+  background: #fbefef;
+  color: #a56868;
+}
+.applicationCount {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #8791a5;
+  font-size: 12px;
+}
+.empty {
+  text-align: center;
+  padding: 48px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 11px;
+  background: #fff;
+  border: 1px solid #e3e8f1;
+  border-radius: 14px;
+  color: #8791a5;
+}
+.empty h3 {
+  font-size: 17px;
+  color: #4b566b;
+}
+.empty p {
+  font-size: 12px;
+}
+.inbox {
+  border: 1px solid #e3e8f1;
+  border-radius: 15px;
+  background: #fff;
+  margin-top: 32px;
+  overflow: hidden;
+}
+.inboxHeading {
+  padding: 24px;
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #edf0f5;
+}
+.inboxHeading p {
+  color: #8791a5;
+  font-size: 12px;
+  margin-top: 5px;
+}
+.inboxHeading label > span {
+  font-size: 10px;
+  color: #8791a5;
+  display: block;
+  margin-bottom: 6px;
+}
+.applicationRow {
+  padding: 22px 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  border-bottom: 1px solid #edf0f5;
+}
+.applicationRow:last-child {
+  border-bottom: 0;
+}
+.applicantAvatar {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  background: #f0f3fa;
+  color: #7c90b5;
+  border-radius: 11px;
+}
+.applicantInfo {
+  flex: 1;
+  min-width: 0;
+}
+.applicantInfo h3 {
+  font-size: 14px;
+}
+.applicantInfo p {
+  font-size: 11px;
+  color: #8590a5;
+  margin-top: 4px;
+}
+.applicantInfo p > span {
+  margin: 0 4px;
+}
+.applicantEmail {
+  display: block;
+  color: #8590a5;
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+.applicantInfo blockquote {
+  font-size: 12px;
+  color: #68758c;
+  background: #f7f9fc;
+  border-left: 2px solid #dbe3f2;
+  margin: 11px 0 0;
+  padding: 9px 12px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.reviewActions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.statusBadge {
+  display: inline-flex;
+  padding: 5px 9px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
+}
+.emptyInbox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+  gap: 9px;
+  color: #8994a8;
+  text-align: center;
+}
+.emptyInbox strong {
+  font-size: 13px;
+  color: #62718c;
+}
+.emptyInbox span {
+  font-size: 11px;
+}
+.applicationDialog {
+  width: min(550px, calc(100vw - 32px));
+}
+.dialogBody {
+  padding: 22px 26px;
+}
+.applicationSummary {
+  padding: 15px 17px;
+  background: #f4f7fc;
+  border: 1px solid #e4ebf6;
+  border-radius: 9px;
+  margin-bottom: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.applicationSummary strong {
+  color: #4e6287;
+  font-size: 13px;
+  margin-bottom: 3px;
+}
+.applicationSummary span {
+  font-size: 11px;
+  color: #79859a;
+}
+.optional {
+  color: #99a1b0;
+  font-weight: 400;
+  font-size: 11px;
+}
+.dialogHint {
+  color: #8a94a7;
+  font-size: 11px;
+  margin-top: 12px;
+}
+.dialogBody > :global(.error-box) {
+  margin-top: 15px;
+}
+@media (min-width: 1550px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 1100px) {
+  .inboxHeading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .reviewActions {
+    flex-direction: column-reverse;
+  }
+}
+@media (max-width: 800px) {
+  .catalogHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .filters {
+    width: 100%;
+  }
+  .filters label {
+    flex: 1;
+    min-width: 0;
+  }
+  .search {
+    min-width: 0 !important;
+    flex: 1.5 !important;
+  }
+  .intro {
+    padding: 22px;
+  }
+  .introCount {
+    min-width: 105px;
+    padding-left: 18px;
+  }
+  .intro h2 {
+    font-size: 18px;
+  }
+  .introIcon {
+    display: none;
+  }
+}
+@media (max-width: 620px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .intro {
+    gap: 14px;
+    padding: 20px;
+  }
+  .introCount {
+    display: none;
+  }
+  .intro p {
+    font-size: 11px;
+  }
+  .filters {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 9px;
+  }
+  .card {
+    padding: 21px;
+  }
+  .details > div {
+    grid-template-columns: 120px 1fr;
+    gap: 10px;
+  }
+  .inboxHeading {
+    padding: 20px;
+  }
+  .applicationRow {
+    padding: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .applicantAvatar {
+    display: none;
+  }
+  .reviewActions {
+    flex-direction: row;
+    width: 100%;
+    margin-top: 5px;
+  }
+  .reviewActions > button {
+    flex: 1;
+  }
+  .dialogBody {
+    padding: 20px;
+  }
+}

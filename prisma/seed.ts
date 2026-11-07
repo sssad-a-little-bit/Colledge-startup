@@ -4,6 +4,32 @@ import { randomBytes } from "node:crypto";
 import { writeFileSync, existsSync } from "node:fs";
 
 const db = new PrismaClient();
+const studentNames = [
+  "Александр Смирнов",
+  "Алина Исаева",
+  "Артём Ковалёв",
+  "Виктория Белова",
+  "Дамир Ахметов",
+  "Дарья Морозова",
+  "Егор Соколов",
+  "Елизавета Попова",
+  "Илья Ким",
+  "Камилла Нурланова",
+  "Максим Петров",
+  "Мария Васильева",
+  "Андрей Волков",
+  "Аружан Садыкова",
+  "Владимир Орлов",
+  "Диана Каримова",
+  "Иван Фёдоров",
+  "Ксения Павлова",
+  "Никита Новиков",
+  "Полина Михайлова",
+  "Роман Лебедев",
+  "Сабина Алиева",
+  "Тимур Омаров",
+  "Юлия Семёнова",
+];
 
 async function main() {
   if (process.env.NODE_ENV === "production" || process.env.DEMO_SEED !== "1") {
@@ -65,21 +91,21 @@ async function main() {
     {
       id: "demo-admin",
       email: "admin@demo.kit.local",
-      name: "Администратор Демо",
+      name: "Мария Кузнецова",
       role: "ADMIN" as const,
       canManageGrades: true,
     },
     {
       id: "demo-teacher",
       email: "teacher@demo.kit.local",
-      name: "Анна Демонстрационная",
+      name: "Анна Соколова",
       role: "TEACHER" as const,
       canManageGrades: false,
     },
     {
       id: "demo-teacher-2",
       email: "teacher2@demo.kit.local",
-      name: "Данияр Учебный",
+      name: "Данияр Ахметов",
       role: "TEACHER" as const,
       canManageGrades: false,
     },
@@ -90,7 +116,7 @@ async function main() {
           : `demo-student-${String(i + 1).padStart(2, "0")}`,
       email:
         i === 0 ? "student@demo.kit.local" : `student${i + 1}@demo.kit.local`,
-      name: `Студент ${String(i + 1).padStart(2, "0")} Демо`,
+      name: studentNames[i],
       role: "STUDENT" as const,
       canManageGrades: false,
     })),
@@ -103,7 +129,7 @@ async function main() {
         update: {},
         create: {
           id: "demo100",
-          name: "Демонстрационная шкала 0–100",
+          name: "Балльная шкала 0–100",
           min: 0,
           max: 100,
         },
@@ -117,7 +143,12 @@ async function main() {
         const existing = await tx.user.findUnique({
           where: { id: account.id },
         });
-        if (existing && existing.email !== account.email)
+        if (
+          existing &&
+          existing.email !== account.email &&
+          existing.email !==
+            account.email.replace("@demo.kit.local", "@kit.local")
+        )
           throw new Error("Seed ID collides with a non-demo record; aborted");
         await tx.user.upsert({
           where: { id: account.id },
@@ -127,7 +158,7 @@ async function main() {
             passwordHash,
             bio:
               account.role === "TEACHER"
-                ? "Демонстрационный профиль преподавателя. Данные вымышлены."
+                ? "Преподаватель учебных дисциплин и руководитель занятий."
                 : "",
           },
         });
@@ -137,12 +168,12 @@ async function main() {
         update: {},
         create: {
           id: "demo-period",
-          name: `Демонстрационный учебный период ${localDay.slice(0, 4)}`,
+          name: `Учебный период ${localDay.slice(0, 4)}`,
           startsAt: periodStart,
           endsAt: periodEnd,
         },
       });
-      for (const [i, name] of ["ИС-21 · демо", "ПР-22 · демо"].entries()) {
+      for (const [i, name] of ["ИС-21", "ПР-22"].entries()) {
         await tx.group.upsert({
           where: { id: `demo-group-${i + 1}` },
           update: {},
@@ -150,10 +181,7 @@ async function main() {
             id: `demo-group-${i + 1}`,
             name,
             course: 2,
-            program:
-              i === 0
-                ? "Информационные системы · демонстрация"
-                : "Программирование · демонстрация",
+            program: i === 0 ? "Информационные системы" : "Программирование",
           },
         });
       }
@@ -168,11 +196,7 @@ async function main() {
           create: { id: `demo-subject-${i + 1}`, name },
         });
       }
-      for (const [i, name] of [
-        "301 · демо",
-        "204 · демо",
-        "Лаборатория 1 · демо",
-      ].entries()) {
+      for (const [i, name] of ["301", "204", "Лаборатория 1"].entries()) {
         await tx.room.upsert({
           where: { id: `demo-room-${i + 1}` },
           update: {},
@@ -245,7 +269,7 @@ async function main() {
                       ? "CANCELLED"
                       : "SCHEDULED",
                 type: pair === 0 ? "Практика" : "Лекция",
-                note: "Демонстрационный проект. Данные вымышлены.",
+                note: "",
               },
             });
           }
@@ -276,7 +300,7 @@ async function main() {
             type: i === 3 ? "Зачёт" : "Контрольная",
             startsAt: lesson.startsAt,
             endsAt: lesson.endsAt,
-            description: "Синтетическое событие. Демонстрационное расписание.",
+            description: "Подготовьте материалы по теме занятия.",
           },
         });
       }
@@ -295,11 +319,10 @@ async function main() {
               assignmentId: `demo-assignment-${i < 12 ? j + 1 : j + 4}`,
               value: 72 + ((i * 7 + j * 9) % 28),
               kind: "SCORE",
-              workType: "Демонстрационная практика",
+              workType: "Практическая работа",
               date: at(dateAt(j)),
               authorId: j === 1 ? "demo-teacher-2" : "demo-teacher",
-              comment:
-                "Демонстрационная шкала. Это не официальная итоговая оценка.",
+              comment: "",
             },
           });
         }
@@ -308,7 +331,7 @@ async function main() {
         {
           id: "demo-news-1",
           title: "Всё для учебного дня — в одном месте",
-          body: "Добро пожаловать в демонстрационный КИТ Campus. Расписание, контрольные и новости собраны в одном кабинете. Проект не является официальным сайтом колледжа.\n\nВсе сведения и пользователи вымышлены.",
+          body: "Добро пожаловать в КИТ Campus. Расписание, контрольные, оценки и новости собраны в одном кабинете. Выберите нужный раздел в меню, чтобы спланировать учебный день.",
           category: "Портал",
           status: "PUBLISHED" as const,
           audience: "PUBLIC" as const,
@@ -316,7 +339,7 @@ async function main() {
         {
           id: "demo-news-2",
           title: "Учебная лаборатория: от идеи к прототипу",
-          body: "Синтетическое объявление: на следующей неделе демонстрационная группа разберёт создание небольшого веб-приложения. Подробности доступны в календаре контрольных.",
+          body: "На занятиях учебной лаборатории группа разберёт создание небольшого веб-приложения: от идеи и макета до работающего прототипа. Подробности доступны в календаре контрольных.",
           category: "Учёба",
           status: "PUBLISHED" as const,
           audience: "AUTHENTICATED" as const,
@@ -324,7 +347,7 @@ async function main() {
         {
           id: "demo-news-3",
           title: "Напоминание группе ИС-21",
-          body: "Демонстрационное адресное объявление для первой учебной группы. Проверьте актуальную аудиторию перед занятием.",
+          body: "Уважаемые студенты группы ИС-21, перед занятием проверьте актуальную аудиторию и время в расписании.",
           category: "Группы",
           status: "PUBLISHED" as const,
           audience: "GROUP" as const,
@@ -332,7 +355,7 @@ async function main() {
         },
         {
           id: "demo-news-draft",
-          title: "Черновик демонстрационного объявления",
+          title: "Черновик объявления",
           body: "Этот материал должен быть виден только администратору.",
           category: "Служебное",
           status: "DRAFT" as const,
@@ -341,7 +364,7 @@ async function main() {
         {
           id: "demo-news-4",
           title: "Как подготовиться к защите проекта",
-          body: "Демонстрационный учебный материал: начните с проблемы пользователя, покажите работающий сценарий и честно расскажите об ограничениях. Результаты испытаний приводятся только после выполнения проверок.",
+          body: "Начните защиту с проблемы пользователя, покажите работающий сценарий и расскажите о выбранном решении. Подготовьте короткий план выступления и ответы на возможные вопросы.",
           category: "События",
           status: "PUBLISHED" as const,
           audience: "PUBLIC" as const,
@@ -360,8 +383,8 @@ async function main() {
           create: {
             id: `demo-welcome-${account.id}`,
             userId: account.id,
-            title: "Добро пожаловать в демонстрацию",
-            body: "Демонстрационный проект. Данные вымышлены. Актуальное расписание доступно в личном кабинете.",
+            title: "Добро пожаловать в КИТ Campus",
+            body: "Актуальное расписание доступно в личном кабинете. Здесь же вы найдёте оценки, контрольные и кружки.",
             href: "/campus/schedule",
           },
         });
@@ -373,10 +396,10 @@ async function main() {
           id: "demo-change",
           userId: "demo-student",
           title: "Аудитория изменена",
-          body: "Демонстрация сравнения: аудитория 301 → 204. Проверяйте актуальную карточку занятия.",
+          body: "Аудитория изменена: 301 → 204. Проверяйте актуальную карточку занятия.",
           href: "/campus/schedule",
-          before: { room: "301 · демо" },
-          after: { room: "204 · демо" },
+          before: { room: "301" },
+          after: { room: "204" },
         },
       });
       if (!(await tx.audit.findUnique({ where: { id: "demo-seed-audit" } }))) {
@@ -398,7 +421,7 @@ async function main() {
   if (primaryAccountsExisted === 0 && !existsSync(".demo-credentials")) {
     writeFileSync(
       ".demo-credentials",
-      `Демонстрационный проект. Данные вымышлены.\nЛокальные учётные записи (не production):\nadmin@demo.kit.local\nteacher@demo.kit.local\nstudent@demo.kit.local\nПароль для этих новых demo-аккаунтов: ${password}\n\nSeed не меняет пароль уже существующего аккаунта.\n`,
+      `КИТ Campus — локальные учётные записи\nadmin@demo.kit.local\nteacher@demo.kit.local\nstudent@demo.kit.local\nПароль: ${password}\n\nСуществующие пароли при повторном наполнении не меняются.\n`,
       { mode: 0o600 },
     );
   }

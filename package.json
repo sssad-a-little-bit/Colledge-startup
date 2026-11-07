@@ -2,6 +2,9 @@
   "name": "kit-campus-demo",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "24.x"
+  },
   "scripts": {
     "dev": "next dev --hostname 0.0.0.0",
     "build": "prisma generate && next build",
@@ -48,5 +51,12 @@
     "postcss": "8.5.32",
     "effect": "3.22.4",
     "deepmerge-ts": "8.0.2"
+  },
+  "allowScripts": {
+    "@prisma/client@6.19.0": true,
+    "@prisma/engines@6.19.0": true,
+    "esbuild@0.25.12": true,
+    "esbuild@0.28.2": true,
+    "prisma@6.19.0": true
   }
 }

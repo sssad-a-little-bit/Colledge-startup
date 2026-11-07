@@ -45,7 +45,9 @@ export const authOptions: NextAuthOptions = {
           )
             return null;
           const key = createHash("sha256")
-            .update(`login:${email}`)
+            .update(
+              `login:${email.replace(/@demo\.kit\.local$/, "@kit.local")}`,
+            )
             .digest("hex");
           const now = new Date();
           // Persistent, atomic increment: parallel attempts cannot bypass a memory-only limiter.
@@ -80,7 +82,17 @@ export const authOptions: NextAuthOptions = {
             return true;
           });
           if (!allowed) return null;
-          const user = await db.user.findUnique({ where: { email } });
+          // Keep previously issued local logins working after removing the old
+          // environment suffix from visible account addresses.
+          const user =
+            (await db.user.findUnique({ where: { email } })) ??
+            (email.endsWith("@demo.kit.local")
+              ? await db.user.findUnique({
+                  where: {
+                    email: email.replace(/@demo\.kit\.local$/, "@kit.local"),
+                  },
+                })
+              : null);
           const correct = await compare(
             password,
             user?.passwordHash ?? DUMMY_HASH,

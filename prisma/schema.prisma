@@ -39,6 +39,12 @@ enum Audience {
   GROUP
 }
 
+enum ClubApplicationStatus {
+  PENDING
+  APPROVED
+  DECLINED
+}
+
 model User {
   id String @id @default(cuid())
   email String @unique
@@ -61,13 +67,16 @@ model User {
   notifications Notification[]
   audit Audit[]
   idempotencies Idempotency[]
+  ledClubs Club[] @relation("ClubTeacher")
+  clubApplications ClubApplication[] @relation("ClubStudent")
+  reviewedClubApplications ClubApplication[] @relation("ClubReviewer")
 }
 
 model Group {
   id String @id @default(cuid())
   name String @unique
   course Int @default(1)
-  program String @default("Демонстрационная программа")
+  program String @default("Учебная программа")
   active Boolean @default(true)
   memberships Membership[]
   assignments Assignment[]
@@ -301,4 +310,39 @@ model LoginAttempt {
 model Setting {
   id String @id @default("main")
   loadThreshold Int @default(2)
+}
+
+model Club {
+  id String @id @default(cuid())
+  name String @unique
+  description String @default("")
+  category String @default("")
+  schedule String @default("")
+  location String @default("")
+  teacherId String
+  active Boolean @default(true)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  teacher User @relation("ClubTeacher", fields: [teacherId], references: [id], onDelete: Restrict)
+  applications ClubApplication[]
+  @@index([teacherId, active])
+}
+
+model ClubApplication {
+  id String @id @default(cuid())
+  clubId String
+  studentId String
+  message String @default("")
+  status ClubApplicationStatus @default(PENDING)
+  reviewedById String?
+  reviewedAt DateTime? @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  club Club @relation(fields: [clubId], references: [id], onDelete: Restrict)
+  student User @relation("ClubStudent", fields: [studentId], references: [id], onDelete: Restrict)
+  reviewedBy User? @relation("ClubReviewer", fields: [reviewedById], references: [id], onDelete: Restrict)
+  @@unique([clubId, studentId])
+  @@index([studentId, createdAt])
+  @@index([clubId, status, createdAt])
+  @@index([reviewedById])
 }

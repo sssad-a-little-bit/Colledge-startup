@@ -5,10 +5,9 @@ test("публичная главная, новости и вход доступ
   page,
 }) => {
   await page.goto("/");
+  await expect(page.locator(".demo-notice")).toHaveCount(0);
   await expect(
-    page
-      .getByText("Демонстрационный проект. Данные вымышлены.", { exact: false })
-      .first(),
+    page.getByRole("link", { name: "Войти в кабинет", exact: false }).first(),
   ).toBeVisible();
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await page.keyboard.press("Tab");

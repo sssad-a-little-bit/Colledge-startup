@@ -5,6 +5,7 @@ import { hash } from "bcryptjs";
 import { db } from "./db";
 import { AppError } from "./errors";
 import { requireAdmin, requireAssignment } from "./policy";
+import { gradeScore } from "./grades";
 
 export const safeUser = {
   id: true,
@@ -86,6 +87,28 @@ export async function newsScope(
     ],
   };
 }
+
+async function matchingGroupIds(
+  user: User,
+  assignmentScope: Prisma.AssignmentWhereInput,
+  search: string,
+) {
+  // C-locale PostgreSQL installations do not case-fold Cyrillic with ILIKE.
+  // Match the scoped catalogue in Unicode, then keep the data query restricted
+  // by those group IDs and the user's existing assignment permissions.
+  const needle = search.normalize("NFKC").toLocaleLowerCase("ru");
+  const groups = await db.group.findMany({
+    where:
+      user.role === "ADMIN" ? {} : { assignments: { some: assignmentScope } },
+    select: { id: true, name: true },
+  });
+  return groups
+    .filter((group) =>
+      group.name.normalize("NFKC").toLocaleLowerCase("ru").includes(needle),
+    )
+    .map((group) => group.id);
+}
+
 export async function readPortal(
   u: User,
   resource: string,
@@ -173,8 +196,21 @@ export async function readPortal(
         throw new AppError(403, "Доступ к чужим оценкам запрещён");
       if (q.get("studentId")) where.studentId = q.get("studentId")!;
       if (q.get("assignmentId")) where.assignmentId = q.get("assignmentId")!;
+      const assignmentFilters: Prisma.GradeWhereInput[] = [];
       if (q.get("periodId"))
-        where.AND = { assignment: { periodId: q.get("periodId")! } };
+        assignmentFilters.push({
+          assignment: { periodId: q.get("periodId")! },
+        });
+      if (q.get("groupId"))
+        assignmentFilters.push({ assignment: { groupId: q.get("groupId")! } });
+      const groupSearch = q.get("groupSearch")?.trim().slice(0, 100);
+      if (groupSearch)
+        assignmentFilters.push({
+          assignment: {
+            groupId: { in: await matchingGroupIds(u, a, groupSearch) },
+          },
+        });
+      if (assignmentFilters.length) where.AND = assignmentFilters;
       return db.grade.findMany({
         where,
         include: gradeInclude,
@@ -197,7 +233,12 @@ export async function readPortal(
     }
     case "assignments": {
       const assignments = await db.assignment.findMany({
-        where: a,
+        where: {
+          AND: [
+            a,
+            ...(q.get("groupId") ? [{ groupId: q.get("groupId")! }] : []),
+          ],
+        },
         include: assignmentInclude,
         take,
         skip,
@@ -213,6 +254,7 @@ export async function readPortal(
                 groupId: x.groupId,
                 periodId: x.periodId,
                 ...currentMembershipPlaceholder(),
+                user: { active: true, role: "STUDENT" },
               },
               include: {
                 user: { select: { id: true, name: true, active: true } },
@@ -259,12 +301,20 @@ export async function readPortal(
         skip,
         orderBy: { name: "asc" },
       });
-    case "groups":
+    case "groups": {
+      const search = q.get("groupSearch")?.trim().slice(0, 100);
       return db.group.findMany({
-        where: u.role === "ADMIN" ? {} : { assignments: { some: a } },
+        where: {
+          ...(u.role === "ADMIN" ? {} : { assignments: { some: a } }),
+          ...(search
+            ? { id: { in: await matchingGroupIds(u, a, search) } }
+            : {}),
+        },
         take,
         skip,
+        orderBy: { name: "asc" },
       });
+    }
     case "subjects":
       return db.subject.findMany({
         where: u.role === "ADMIN" ? {} : { assignments: { some: a } },
@@ -725,15 +775,8 @@ async function mutate(
       where: { id: typeof p.scaleId === "string" ? p.scaleId : "demo100" },
     });
     if (!scale) throw new AppError(422, "Шкала не найдена");
-    if (
-      kind === "SCORE" &&
-      (p.value === null || p.value === undefined || p.value === "")
-    )
-      throw new AppError(422, "Введите балл: пустое значение не равно нулю");
     const value =
-      kind === "SCORE"
-        ? z.coerce.number().int().min(scale.min).max(scale.max).parse(p.value)
-        : null;
+      kind === "SCORE" ? gradeScore(p.value, scale.min, scale.max) : null;
     const assessmentId = p.assessmentId ? id(p.assessmentId) : null;
     if (assessmentId) {
       const assessment = await tx.assessment.findUnique({
@@ -794,8 +837,8 @@ async function mutate(
   if (action === "saveScale") {
     const data = {
       name: text(p.name, 120),
-      min: z.coerce.number().int().min(-10000).max(10000).parse(p.min),
-      max: z.coerce.number().int().min(-10000).max(10000).parse(p.max),
+      min: z.coerce.number().int().min(0).max(100).parse(p.min),
+      max: z.coerce.number().int().min(0).max(100).parse(p.max),
     };
     if (data.min >= data.max)
       throw new AppError(422, "Максимум шкалы должен быть больше минимума");
@@ -994,7 +1037,7 @@ async function mutate(
         .min(1)
         .max(6)
         .parse(p.course || 1),
-      program: text(p.program || "Демонстрационная программа", 200),
+      program: text(p.program || "Учебная программа", 200),
       active: p.active !== false,
     };
     result = p.id

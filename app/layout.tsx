@@ -3,7 +3,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "КИТ Campus · Учебный портал",
   description:
-    "Демонстрационный учебный портал. Данные вымышлены. Проект не является официальным сайтом колледжа.",
+    "КИТ Campus — расписание, оценки, новости и кружки в одном учебном портале.",
 };
 export default function RootLayout({
   children,

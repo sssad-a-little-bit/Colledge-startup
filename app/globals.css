@@ -2758,6 +2758,7 @@ td small {
     margin-bottom: 22px;
     gap: 14px;
     align-items: flex-start;
+    flex-wrap: wrap;
   }
   .page-heading h1 {
     font-size: 23px;
@@ -2767,11 +2768,11 @@ td small {
     max-width: 310px;
   }
   .page-heading > .button {
-    font-size: 0;
-    width: 37px;
-    height: 37px;
-    min-height: 37px;
-    padding: 8px;
+    font-size: 13px;
+    width: auto;
+    height: auto;
+    min-height: 44px;
+    padding: 10px 14px;
     flex-shrink: 0;
     margin-top: 4px;
   }
