@@ -1,0 +1,11 @@
+node_modules/
+.next/
+.env
+.env.*.local
+.demo-credentials*
+backups/
+test-results/
+playwright-report/
+*.tsbuildinfo
+
+*.zip

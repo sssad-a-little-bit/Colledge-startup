@@ -1,0 +1,304 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+  ADMIN
+}
+
+enum LessonStatus {
+  SCHEDULED
+  CANCELLED
+  MOVED
+  SUBSTITUTED
+}
+
+enum GradeKind {
+  SCORE
+  ABSENT
+  UNGRADED
+}
+
+enum NewsStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum Audience {
+  PUBLIC
+  AUTHENTICATED
+  ROLE
+  GROUP
+}
+
+model User {
+  id String @id @default(cuid())
+  email String @unique
+  passwordHash String
+  name String
+  role Role @default(STUDENT)
+  active Boolean @default(true)
+  canManageGrades Boolean @default(false)
+  bio String @default("")
+  phone String @default("")
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  memberships Membership[]
+  assignments Assignment[]
+  lessons Lesson[]
+  assessments Assessment[]
+  grades Grade[] @relation("StudentGrades")
+  authoredGrades Grade[] @relation("GradeAuthor")
+  gradeHistory GradeHistory[]
+  news News[]
+  notifications Notification[]
+  audit Audit[]
+  idempotencies Idempotency[]
+}
+
+model Group {
+  id String @id @default(cuid())
+  name String @unique
+  course Int @default(1)
+  program String @default("Демонстрационная программа")
+  active Boolean @default(true)
+  memberships Membership[]
+  assignments Assignment[]
+  lessons Lesson[]
+  assessments Assessment[]
+  news News[]
+}
+
+model Period {
+  id String @id @default(cuid())
+  name String @unique
+  startsAt DateTime @db.Timestamptz(3)
+  endsAt DateTime @db.Timestamptz(3)
+  active Boolean @default(true)
+  memberships Membership[]
+  assignments Assignment[]
+}
+
+model Membership {
+  id String @id @default(cuid())
+  userId String
+  groupId String
+  periodId String
+  startsAt DateTime @db.Timestamptz(3)
+  endsAt DateTime? @db.Timestamptz(3)
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  period Period @relation(fields: [periodId], references: [id], onDelete: Restrict)
+  @@unique([userId, groupId, periodId, startsAt])
+  @@index([userId, periodId])
+  @@index([groupId, periodId])
+}
+
+model Subject {
+  id String @id @default(cuid())
+  name String @unique
+  active Boolean @default(true)
+  assignments Assignment[]
+}
+
+model Room {
+  id String @id @default(cuid())
+  name String @unique
+  active Boolean @default(true)
+  lessons Lesson[]
+  assessments Assessment[]
+}
+
+model Assignment {
+  id String @id @default(cuid())
+  teacherId String
+  groupId String
+  subjectId String
+  periodId String
+  active Boolean @default(true)
+  teacher User @relation(fields: [teacherId], references: [id], onDelete: Restrict)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  period Period @relation(fields: [periodId], references: [id], onDelete: Restrict)
+  lessons Lesson[]
+  assessments Assessment[]
+  grades Grade[]
+  @@unique([teacherId, groupId, subjectId, periodId])
+  @@unique([id, groupId])
+  @@index([groupId, periodId, active])
+  @@index([teacherId, active])
+}
+
+model Lesson {
+  id String @id @default(cuid())
+  assignmentId String
+  teacherId String
+  groupId String
+  roomId String
+  startsAt DateTime @db.Timestamptz(3)
+  endsAt DateTime @db.Timestamptz(3)
+  type String @default("Практика")
+  status LessonStatus @default(SCHEDULED)
+  note String @default("")
+  version Int @default(1)
+  assignment Assignment @relation(fields: [assignmentId, groupId], references: [id, groupId], onDelete: Restrict)
+  teacher User @relation(fields: [teacherId], references: [id], onDelete: Restrict)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  room Room @relation(fields: [roomId], references: [id], onDelete: Restrict)
+  assessments Assessment[]
+  @@index([groupId, startsAt])
+  @@index([teacherId, startsAt])
+  @@index([roomId, startsAt])
+  @@index([assignmentId, startsAt])
+}
+
+model Assessment {
+  id String @id @default(cuid())
+  assignmentId String
+  teacherId String
+  groupId String
+  lessonId String?
+  roomId String?
+  title String
+  type String @default("Контрольная")
+  startsAt DateTime @db.Timestamptz(3)
+  endsAt DateTime? @db.Timestamptz(3)
+  description String @default("")
+  status String @default("SCHEDULED")
+  version Int @default(1)
+  assignment Assignment @relation(fields: [assignmentId, groupId], references: [id, groupId], onDelete: Restrict)
+  teacher User @relation(fields: [teacherId], references: [id], onDelete: Restrict)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  lesson Lesson? @relation(fields: [lessonId], references: [id], onDelete: Restrict)
+  room Room? @relation(fields: [roomId], references: [id], onDelete: Restrict)
+  grades Grade[]
+  @@index([groupId, startsAt])
+  @@index([teacherId, startsAt])
+  @@index([assignmentId, startsAt])
+  @@index([roomId])
+}
+
+model Scale {
+  id String @id @default(cuid())
+  name String
+  min Int @default(0)
+  max Int @default(100)
+  grades Grade[]
+}
+
+model Grade {
+  id String @id @default(cuid())
+  studentId String
+  assignmentId String
+  assessmentId String?
+  scaleId String @default("demo100")
+  value Int?
+  kind GradeKind @default(SCORE)
+  workType String @default("Практическая работа")
+  date DateTime @db.Timestamptz(3)
+  comment String @default("")
+  authorId String
+  version Int @default(1)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  student User @relation("StudentGrades", fields: [studentId], references: [id], onDelete: Restrict)
+  author User @relation("GradeAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Restrict)
+  assessment Assessment? @relation(fields: [assessmentId], references: [id], onDelete: Restrict)
+  scale Scale @relation(fields: [scaleId], references: [id], onDelete: Restrict)
+  history GradeHistory[]
+  @@index([studentId, assignmentId, date])
+  @@index([assignmentId, date])
+  @@index([assessmentId])
+  @@index([authorId])
+}
+
+model GradeHistory {
+  id String @id @default(cuid())
+  gradeId String
+  oldValue Json
+  newValue Json
+  reason String
+  actorId String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  grade Grade @relation(fields: [gradeId], references: [id], onDelete: Restrict)
+  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  @@index([gradeId, createdAt])
+}
+
+model News {
+  id String @id @default(cuid())
+  title String
+  body String
+  category String @default("Новости")
+  status NewsStatus @default(DRAFT)
+  audience Audience @default(PUBLIC)
+  targetRole Role?
+  groupId String?
+  authorId String
+  publishedAt DateTime? @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  author User @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  group Group? @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  @@index([status, audience, publishedAt])
+  @@index([groupId])
+  @@index([authorId])
+}
+
+model Notification {
+  id String @id @default(cuid())
+  userId String
+  title String
+  body String
+  href String
+  before Json?
+  after Json?
+  readAt DateTime? @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  @@index([userId, readAt, createdAt])
+}
+
+model Audit {
+  id String @id @default(cuid())
+  actorId String
+  action String
+  entity String
+  entityId String
+  reason String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  @@index([createdAt])
+  @@index([entity, entityId])
+  @@index([actorId])
+}
+
+model Idempotency {
+  id String @id @default(cuid())
+  key String @unique
+  userId String
+  result Json
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  @@index([createdAt])
+}
+
+model LoginAttempt {
+  id String @id @default(cuid())
+  key String @unique
+  count Int @default(0)
+  blockedUntil DateTime? @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+}
+
+model Setting {
+  id String @id @default("main")
+  loadThreshold Int @default(2)
+}

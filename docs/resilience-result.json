@@ -1,0 +1,17 @@
+{
+  "timestamp": "2026-11-07T10:43:46.417Z",
+  "interruptedRequestSafeRetry": "passed",
+  "databaseRestartPersistence": "passed",
+  "gradeCountBefore": 96,
+  "gradeCountAfter": 96,
+  "databaseUnavailable": {
+    "livenessStatus": 200,
+    "readinessStatus": 503,
+    "writeStatus": 503
+  },
+  "recovery": "passed",
+  "limitations": [
+    "Loopback AbortController interruption, not physical network fault",
+    "Application restart tested separately; no host power loss simulated"
+  ]
+}

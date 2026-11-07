@@ -1,0 +1,4 @@
+{
+ "from":"2026-11-09","to":"2026-11-22","except":["2026-11-16"],
+ "series":[{"assignmentId":"demo-assignment-1","roomId":"demo-room-1","weekday":1,"start":"08:30","end":"10:00","note":"Демонстрационная недельная серия"}]
+}

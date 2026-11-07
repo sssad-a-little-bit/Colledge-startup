@@ -1,0 +1,92 @@
+{
+  "runId": "bcf71584",
+  "timestamp": "2026-11-07T10:41:42.448Z",
+  "baseURL": "http://localhost:3000",
+  "serverMode": "Requires next build + next start; verify server command separately",
+  "distinctAuthenticatedUsers": 100,
+  "peakActiveUsers": 100,
+  "rampSeconds": 10,
+  "steadySeconds": 60,
+  "totalWallSeconds": 71,
+  "thinkTimeMs": [
+    750,
+    1250
+  ],
+  "profile": {
+    "privateSchedule": 0.7,
+    "audienceFilteredNews": 0.25,
+    "ownProfileWrite": 0.05
+  },
+  "database": {
+    "users": 250,
+    "lessons": 110,
+    "assessments": 9,
+    "grades": 96,
+    "news": 13
+  },
+  "environment": {
+    "node": "v24.22.1",
+    "platform": "linux",
+    "arch": "x64",
+    "logicalCPUs": 3,
+    "totalMemoryBytes": 10452459520
+  },
+  "ramp": {
+    "requests": 548,
+    "errors": 0,
+    "errorRate": 0,
+    "p50Ms": 12.3,
+    "p95Ms": 26.79,
+    "statusCounts": {
+      "200": 548
+    }
+  },
+  "steady": {
+    "requests": 5899,
+    "errors": 0,
+    "errorRate": 0,
+    "p50Ms": 15.27,
+    "p95Ms": 40.38,
+    "statusCounts": {
+      "200": 5899
+    }
+  },
+  "operations": {
+    "schedule": {
+      "requests": 4137,
+      "errors": 0,
+      "errorRate": 0,
+      "p50Ms": 16.65,
+      "p95Ms": 42.81,
+      "statusCounts": {
+        "200": 4137
+      }
+    },
+    "news": {
+      "requests": 1465,
+      "errors": 0,
+      "errorRate": 0,
+      "p50Ms": 10.96,
+      "p95Ms": 30.57,
+      "statusCounts": {
+        "200": 1465
+      }
+    },
+    "profile-write": {
+      "requests": 297,
+      "errors": 0,
+      "errorRate": 0,
+      "p50Ms": 15.44,
+      "p95Ms": 53.86,
+      "statusCounts": {
+        "200": 297
+      }
+    }
+  },
+  "limitations": [
+    "Local loopback only; no WAN or TLS proxy overhead measured",
+    "Users perform reads and permitted profile changes; no simultaneous grading workload",
+    "Infrastructure shares CPU and memory with generator; no cgroup resource limits",
+    "Synthetic data volume only; no availability guarantee"
+  ]
+}

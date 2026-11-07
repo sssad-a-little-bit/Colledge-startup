@@ -1,0 +1,14 @@
+node_modules
+.next
+.git
+.env
+.env.*
+!.env.example
+.demo-credentials*
+backups
+playwright-report
+test-results
+*.tsbuildinfo
+shared
+scratch
+library-files
