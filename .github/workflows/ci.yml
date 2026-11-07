@@ -6,7 +6,7 @@ permissions:
   contents: read
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     services:
       postgres:
@@ -34,13 +34,13 @@ jobs:
           cache: npm
       - name: Ephemeral test credentials
         run: |
-          node -e "const fs=require('fs'),c=require('crypto');fs.appendFileSync(process.env.GITHUB_ENV,'NEXTAUTH_SECRET='+c.randomBytes(32).toString('hex')+'\nDEMO_PASSWORD='+c.randomBytes(24).toString('base64url')+'\n')"
+          node -e "const fs=require('fs'),c=require('crypto');for(const key of ['NEXTAUTH_SECRET','DEMO_PASSWORD']){const value=c.randomBytes(32).toString('hex');console.log('::add-mask::'+value);fs.appendFileSync(process.env.GITHUB_ENV,key+'='+value+'\n')}"
       - run: npm ci
       - run: npm run db:migrate
       - run: DEMO_SEED=1 npm run db:seed
       - run: npm run lint
       - run: npm run typecheck
-      - run: npx vitest run tests/csv.test.ts
+      - run: npx vitest run tests/csv.test.ts tests/timezone.test.ts tests/grades.test.ts
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - name: Real PostgreSQL integration and browser checks
