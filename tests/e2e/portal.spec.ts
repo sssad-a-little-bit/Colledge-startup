@@ -119,28 +119,42 @@ test("преподаватель сохраняет оценку в журнал
   await expect(page).toHaveURL(/\/campus$/, { timeout: 20000 });
   await page.goto("/campus/grades");
   await expect(
-    page.getByRole("heading", { name: "Учебный журнал" }),
+    page.getByRole("heading", { name: "Оценки и журнал", exact: true }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Выставить оценку" }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
-  await dialog
-    .getByLabel("Предмет, группа и период", { exact: false })
-    .selectOption("demo-assignment-1");
-  await dialog
-    .getByLabel("Студент", { exact: false })
-    .selectOption("demo-student");
+  const group = dialog.getByRole("combobox", { name: "Группа", exact: true });
+  const subject = dialog.getByRole("combobox", {
+    name: "Предмет",
+    exact: true,
+  });
+  const pupil = dialog.getByRole("combobox", { name: "Ученик", exact: true });
+  await expect(subject).toBeDisabled();
+  await expect(pupil).toBeDisabled();
+  await group.selectOption("demo-group-1");
+  await expect(subject).toBeEnabled();
+  await expect(pupil).toBeDisabled();
+  await subject.selectOption("demo-assignment-1");
+  await expect(pupil).toBeEnabled();
+  await pupil.selectOption("demo-student");
   await dialog.getByLabel("Тип записи", { exact: false }).selectOption("SCORE");
-  await expect(
-    dialog.getByLabel("Шкала оценивания", { exact: false }),
-  ).toHaveValue("demo100");
-  await dialog.getByLabel(/^Балл/).fill("86");
+  const score = dialog.getByRole("spinbutton", { name: /Балл от 0 до 100/ });
+  await expect(score).toHaveAttribute("min", "0");
+  await expect(score).toHaveAttribute("max", "100");
+  await score.fill("86");
   await dialog.getByLabel("Вид работы", { exact: false }).fill(workType);
-  await dialog.getByRole("button", { name: "Сохранить", exact: true }).click();
+  await dialog
+    .getByRole("button", { name: "Сохранить оценку", exact: true })
+    .click();
   await expect(page.getByRole("status")).toContainText("Оценка сохранена", {
     timeout: 20000,
   });
-  await expect(page.getByText(workType, { exact: false })).toBeVisible();
+  await expect(dialog).toHaveCount(0);
+  await page.getByRole("tab", { name: "Список оценок", exact: true }).click();
+  const savedRow = page.getByRole("row").filter({ hasText: workType });
+  await expect(savedRow).toBeVisible();
+  await expect(savedRow.getByText("86", { exact: true })).toBeVisible();
   await page.screenshot({
     path: `test-results/journal-${test.info().project.name}.png`,
     fullPage: true,
