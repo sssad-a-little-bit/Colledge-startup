@@ -1,6 +1,6 @@
 # Общая ссылка через GitHub и Vercel
 
-GitHub хранит исходный код и запускает обновления Vercel после изменений основной ветки. Vercel исполняет Next.js, а Neon хранит PostgreSQL. Общий адрес берётся из раздела **Domains** проекта Vercel. GitHub Pages продолжает показывать отдельную статическую страницу.
+GitHub хранит исходный код и запускает обновления Vercel после изменений основной ветки. Vercel исполняет Next.js, а Neon хранит PostgreSQL. Постоянный адрес портала: [colledge-startup.vercel.app](https://colledge-startup.vercel.app). [GitHub Pages](https://sssad-a-little-bit.github.io/Colledge-startup/) автоматически перенаправляет на этот адрес. Для работы общей ссылки локальный сервер на ПК не требуется.
 
 ## Подключение
 
